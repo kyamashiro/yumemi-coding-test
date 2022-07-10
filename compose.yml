@@ -1,0 +1,25 @@
+services:
+  ### PHP & Apache ##############################################
+  php-apache:
+    build: ./php-apache
+    container_name: php-apache
+    ports:
+      - 80:80
+      - 8080:8080
+    volumes:
+      - ./workspace:/var/www/html
+      - ./php-apache/php.ini:/usr/local/etc/php/php.ini
+  ### MySQL ##############################################
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      TZ: Asia/Tokyo
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+    ports:
+      - 3306:3306
+    volumes:
+      - ./db/init:/docker-entrypoint-initdb.d
+      - ./db/data:/var/lib/mysql
+      - ./db/my.cnf:/etc/mysql/my.cnf

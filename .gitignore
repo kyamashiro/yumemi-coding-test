@@ -1,0 +1,4 @@
+!.gitkeep
+.idea/
+db/data/
+php-apache/apache2/ssl/*.pem
