@@ -1,29 +1,73 @@
-# docker-lamp8
+# ゆめみサーバサイドコーディング試験
 
-Apache + MySQL8 + PHP8 + Composer + Mailhog
+https://www.yumemi.co.jp/serverside_recruit
 
-## Install Compose V2
+## 環境
+
+Apache + MySQL8 + PHP8 + Composer
+
+**Docker Compose V2をインストールしておいてください。**
 
 https://docs.docker.com/compose/cli-command/#install-on-linux
 
-## Run
+## 方針
+
+### 重要な前提
+
+* **対象のプレイログ全体は数千万行以上に肥大化することがあります。**  
+  →メモリ不足の懸念がある
+* **プレイヤーの総数は1万人を超えることはありません。**  
+  →プレイヤーの総数が1万人という要件のため、変な実装をしなければ配列の数が1万件になるためメモリ不足の心配はなさそう
+
+### 実装案
+
+1. CSVファイルを読み込んで平均点を計算してトップ10を割り出す  
+   →前提にもあるようにプレイヤー総数が1万人という制約があるためこの案でいけそう。
+
+2. CSVファイルを分割してファイルごとに平均点を計算、トップ10を算出。最後にファイルをガッチャンコしてトップ10を割り出す  
+   →並列処理のデバッグが難しそう。そこまで求められていない
+
+3. CSVファイルをMySQLに読み込んでLOAD DATA CSV FILEでテーブルに突っ込んで、SQLでトップ10を算出する  
+   →読み込んで、SQLで計算、CSVで吐き出すだけなのでお手軽。何回実行しても問題ないはず。ただ今回の場合ではDBが使えないため不採用。
+
+**→1番の案を採用する。**
+
+## 設計
+
+- [ ] CSVファイルの読み込み
+- [ ] プレイヤーごとのスコアの合計とプレイ回数の算出
+  player_idをkeyにして平均点を算出するためにスコア合計とプレイ回数を割り出す
+- [ ] 平均スコアの上位10名の算出  
+  上位10位を割り出すアルゴリズム  
+  ランキングのトップ10の中で最も低いスコアを常に持っておく  
+  トップ10の中で最も低いスコアと
+    * 同じときはスコアを追加する$arr[$score][] = $player_id
+    * 低いとき何もしない
+    * 高いとき、トップ10のスコアに追加、最も低いスコアを削除して、最も低いスコアを更新する  
+      スコアをキーにして、player_idを持てば良い。
+- [ ] 結果をCSVに出力
+
+## 使用方法
 
 ```
+// コンテナビルド&起動
 make build
-make start
-make stop
-make remove
 make bash
-make mysql/bash
+cd src/ver2
+// ゲームのプレイログサンプルCSVファイルを生成
+php random.php 10000
+// ランキングの生成
+php index.php input.csv
 ```
 
-## SSL
+## 別解
 
-Install [mkcert](https://github.com/FiloSottile/mkcert), then
+3番目のMySQLのLOAD DATA INFILEを使用したランキング算出のバージョン
 
 ```sh
-$ mkcert --install
-$ mkcert localhost
+cd src/ver1
+// ゲームのプレイログサンプルCSVファイルを生成
+php random.php 10000
+// ランキングの生成
+php index.php input.csv
 ```
-
-add `localhost.pem` and `localhost-key.pem` file to `php-apache/apache2/ssl`.
