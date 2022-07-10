@@ -60,6 +60,15 @@ php random.php 10000
 php index.php input.csv
 ```
 
+* 1億件のプレイログを作成したときの実行時間
+
+```sh
+time php index.php input.csv
+real	6m32.016s
+user	4m21.648s
+sys	2m9.077s
+```
+
 ## 別解
 
 3番目のMySQLのLOAD DATA INFILEを使用したランキング算出のバージョン
@@ -71,3 +80,14 @@ php random.php 10000
 // ランキングの生成
 php index.php input.csv
 ```
+
+* 1億件のプレイログを作成したときの実行時間
+
+```sh
+time php index.php input.csv
+real	24m49.215s
+user	0m0.800s
+sys	0m3.087s
+```
+
+group byでテーブルフルスキャンになるため遅い。
